@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { CheckOutlined, CopyOutlined } from '@ant-design/icons';
-import { App, Button, ConfigProvider, Flex, theme, Tooltip } from 'antd';
+import { CheckOutlined, CopyOutlined, PlusOutlined } from '@ant-design/icons';
+import { App, Button, ConfigProvider, Flex, theme, Tooltip, Typography } from 'antd';
 import { createStyles } from 'antd-style';
 import copy from 'antd/lib/_util/copy';
 import clsx from 'clsx';
@@ -13,147 +13,257 @@ import usePreviewThemes from './previewThemes';
 import type { PreviewThemeConfig } from './previewThemes';
 import { generateFullCopyFile } from './themeCodeUtils';
 
+const { Text } = Typography;
+
 const locales = {
   cn: {
     themeTitle: '定制主题，随心所欲',
     themeDesc: '开放样式算法与语义化结构，让你与 AI 一起轻松定制主题',
-    aiGenerate: 'AI 生成主题',
+    aiGenerate: 'AI 生成',
     aiGenerateDesc: '用一句话描述你想要的风格',
     copyTheme: '复制主题代码',
     copySuccess: '已复制',
+    exploreThemes: '探索主题',
   },
   en: {
     themeTitle: 'Flexible theme customization',
     themeDesc:
       'Open style algorithms and semantic structures make it easy for you and AI to customize themes',
-    aiGenerate: 'AI Generate Theme',
+    aiGenerate: 'AI Generate',
     aiGenerateDesc: 'Describe your desired style',
     copyTheme: 'Copy theme code',
     copySuccess: 'Copied',
+    exploreThemes: 'Explore Themes',
   },
 };
 
-const useStyles = createStyles(({ css, cssVar }) => ({
+// 每个预设主题对应的图标 emoji 和图标盒背景色
+const THEME_ICON_MAP: Record<string, { icon: string; iconBg: string }> = {
+  light: { icon: '☀️', iconBg: '#F2EEFF' },
+  dark: { icon: '🌙', iconBg: '#2B2D3A' },
+  default: { icon: '☀️', iconBg: '#F2EEFF' },
+  mui: { icon: '🎨', iconBg: '#EBF5FE' },
+  shadcn: { icon: '◻️', iconBg: '#F5F5F5' },
+  cartoon: { icon: '🎪', iconBg: '#FFF7E6' },
+  illustration: { icon: '🖼️', iconBg: '#F0F9FF' },
+  // bootstrap: { icon: '🅱️', iconBg: '#F0EDFF' },
+  // glass: { icon: '💎', iconBg: '#E6F7FF' },
+  // geek: { icon: '⚙️', iconBg: '#1A1A2E' },
+};
+
+const FALLBACK_ICON = { icon: '✦', iconBg: '#F5F5F5' };
+
+function getThemeIcon(previewTheme: PreviewThemeConfig) {
+  if (previewTheme.key && THEME_ICON_MAP[previewTheme.key]) {
+    return THEME_ICON_MAP[previewTheme.key];
+  }
+  // 在 name 中尝试匹配关键词
+  const nameLower = previewTheme.name.toLowerCase();
+  for (const [key, value] of Object.entries(THEME_ICON_MAP)) {
+    if (nameLower.includes(key)) {
+      return value;
+    }
+  }
+  return FALLBACK_ICON;
+}
+
+const useStyles = createStyles(({ css, token }) => ({
   container: css({
     width: '100%',
-    color: cssVar.colorText,
-    lineHeight: cssVar.lineHeight,
-    fontSize: cssVar.fontSize,
-    fontFamily: cssVar.fontFamily,
+    flexDirection: 'column',
     alignItems: 'stretch',
-    justifyContent: 'center',
   }),
 
-  // List
-  list: css({
-    flex: 'auto',
-    margin: 0,
-    padding: 0,
-    listStyleType: 'none',
+  // ======= 顶部主题选择区域 =======
+  selectorRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: token.paddingLG,
+    marginBottom: token.paddingLG,
+    flexWrap: 'wrap',
+  }),
+
+  selectorHeader: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: token.paddingSM,
+    flexShrink: 0,
+  }),
+
+  selectorTitle: css({
+    fontSize: token.fontSizeLG,
+    fontWeight: 600,
+    color: token.colorText,
+    whiteSpace: 'nowrap',
+  }),
+
+  selectorArrow: css({
+    fontSize: 24,
+    color: token.colorPrimary,
+    lineHeight: 1,
+    transform: 'rotate(45deg)',
+    display: 'inline-block',
+  }),
+
+  themeList: css({
+    display: 'flex',
+    gap: token.paddingMD,
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  }),
+
+  // 每一个主题 icon 卡
+  themeCard: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: cssVar.paddingSM,
-  }),
-  listItem: css({
-    margin: 0,
-    fontSize: cssVar.fontSizeLG,
-    lineHeight: cssVar.lineHeightLG,
-    paddingBlock: cssVar.padding,
-    paddingInline: cssVar.paddingLG,
-    border: `${cssVar.lineWidth} ${cssVar.lineType} ${cssVar.colorBorderSecondary}`,
-    borderRadius: cssVar.borderRadius,
-    borderColor: 'transparent',
-    transition: `all ${cssVar.motionDurationMid} ${cssVar.motionEaseInOut}`,
+    alignItems: 'center',
+    gap: token.paddingXS,
     cursor: 'pointer',
+    padding: `${token.paddingXS}px ${token.paddingSM}px`,
+    borderRadius: token.borderRadiusLG,
+    transition: `all ${token.motionDurationMid} ${token.motionEaseInOut}`,
+    outline: 'none',
 
-    '&:hover:not(.active):not(.dark)': {
-      borderColor: cssVar.colorPrimaryBorder,
-      backgroundColor: cssVar.colorPrimaryBg,
+    '&:hover:not(.active)': {
+      backgroundColor: token.colorFillQuaternary,
     },
 
     '&:focus-visible': {
-      outline: `2px solid ${cssVar.colorPrimary}`,
+      outline: `2px solid ${token.colorPrimary}`,
       outlineOffset: 2,
     },
 
-    '&.active': {
-      borderColor: cssVar.colorPrimary,
-      backgroundColor: cssVar.colorPrimaryBg,
-      color: cssVar.colorPrimary,
-    },
-
-    // ========= Dark =========
-    '&.dark': {
-      color: cssVar.colorTextLightSolid,
-      backgroundColor: 'transparent',
-
-      '&:hover, &.active': {
-        borderColor: cssVar.colorTextLightSolid,
-        backgroundColor: 'transparent',
-      },
-    },
-  }),
-
-  copyButton: css({
-    opacity: 0,
-    transition: `opacity ${cssVar.motionDurationMid} ${cssVar.motionEaseInOut}`,
-    flexShrink: 0,
-
-    '&.visible': {
-      opacity: 1,
-    },
-
-    '&.dark': {
-      color: cssVar.colorTextLightSolid,
-
-      '&:hover': {
+    '&.dark-bg': {
+      '&:hover:not(.active)': {
         backgroundColor: 'rgba(255, 255, 255, 0.08)',
       },
-      '&:active': {
-        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    },
+  }),
+
+  themeIconBox: css({
+    width: 64,
+    height: 64,
+    borderRadius: token.borderRadiusLG,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 28,
+    border: `2px solid transparent`,
+    transition: `all ${token.motionDurationMid} ${token.motionEaseInOut}`,
+    position: 'relative',
+    overflow: 'hidden',
+
+    '&.active': {
+      borderColor: token.colorPrimary,
+      boxShadow: `0 0 0 1px ${token.colorPrimary}`,
+    },
+  }),
+
+  themeLabel: css({
+    fontSize: token.fontSizeSM,
+    color: token.colorTextSecondary,
+    transition: `color ${token.motionDurationMid}`,
+    textAlign: 'center',
+    maxWidth: 72,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+
+    '&.active': {
+      color: token.colorPrimary,
+      fontWeight: 600,
+    },
+
+    '&.dark-bg': {
+      color: 'rgba(255, 255, 255, 0.65)',
+
+      '&.active': {
+        color: '#fff',
+        fontWeight: 600,
       },
     },
   }),
 
-  // AI Generate Item
-  aiGenerateItem: css({
-    borderStyle: 'dashed',
-    opacity: 0.7,
+  copyButtonWrap: css({
+    position: 'absolute',
+    top: 4,
+    insetInlineEnd: 4,
+    opacity: 0,
+    transition: `opacity ${token.motionDurationMid}`,
+
+    '.ant-theme-card:hover &, &.visible': {
+      opacity: 1,
+    },
+  }),
+
+  // AI Generate card — dashed style
+  aiThemeCard: css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: token.paddingXS,
     cursor: 'pointer',
-    paddingInline: cssVar.padding,
+    padding: `${token.paddingXS}px ${token.paddingSM}px`,
+    borderRadius: token.borderRadiusLG,
+    outline: 'none',
+    transition: `background ${token.motionDurationMid}`,
+    opacity: 0.75,
+
+    '&:hover': {
+      opacity: 1,
+      backgroundColor: token.colorFillQuaternary,
+    },
+
+    '&:focus-visible': {
+      outline: `2px solid ${token.colorPrimary}`,
+      outlineOffset: 2,
+    },
   }),
 
-  aiGenerateContent: css({
-    position: 'relative',
-    zIndex: 1,
+  aiIconBox: css({
+    width: 64,
+    height: 64,
+    borderRadius: token.borderRadiusLG,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: `2px dashed ${token.colorBorder}`,
+    backgroundColor: token.colorFillQuaternary,
+    color: token.colorTextTertiary,
+    fontSize: 22,
+    transition: `all ${token.motionDurationMid}`,
+
+    '&:hover': {
+      borderColor: token.colorPrimary,
+      color: token.colorPrimary,
+    },
   }),
 
-  aiGenerateIcon: css({
-    fontSize: 14,
-    marginInlineEnd: 6,
-    opacity: 0.6,
-  }),
-
-  aiGenerateDesc: css({
-    fontSize: cssVar.fontSizeSM,
-    opacity: 0.5,
-    marginTop: 2,
-    fontWeight: 400,
-  }),
-
-  // Components
+  // ======= 组件预览区域 =======
   componentsBlockContainer: css({
     flex: 'auto',
     display: 'flex',
-    padding: cssVar.paddingXL,
+    padding: token.paddingXL,
+    margin: '0 auto',
+    marginTop: token.marginLG,
     justifyContent: 'center',
-    border: `${cssVar.lineWidth} ${cssVar.lineType} ${cssVar.colorBorderSecondary}`,
-    borderRadius: cssVar.borderRadius,
-    boxShadow: cssVar.boxShadow,
+    alignItems: 'center',
+    minHeight: 650,
+    border: `1px solid ${token.colorBorderSecondary}`,
+    borderRadius: 16,
+    backgroundColor: token.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.6)',
+    backdropFilter: 'blur(12px)',
+    boxShadow: token.boxShadowTertiary,
+    overflow: 'hidden',
+    width: '100%',
   }),
+
   componentsBlock: css({
-    flex: 'none',
-    maxWidth: `calc(420px + ${cssVar.paddingXL} * 2)`,
+    flex: 'auto',
+    width: '100%',
+    maxWidth: 1320,
+    margin: '0 auto',
   }),
 }));
 
@@ -167,6 +277,7 @@ function ThemePreviewContent(props: ThemePreviewProps) {
   const { styles } = useStyles();
   const isDark = React.use(DarkContext);
   const { message } = App.useApp();
+  const { token } = theme.useToken();
 
   const previewThemes = usePreviewThemes();
 
@@ -177,23 +288,18 @@ function ThemePreviewContent(props: ThemePreviewProps) {
 
   React.useEffect(() => {
     const defaultThemeName = isDark ? 'dark' : 'light';
-
     const targetTheme =
       previewThemes.find((previewTheme) => previewTheme.key === defaultThemeName)?.name ||
       previewThemes[0].name;
-
     setActiveName(targetTheme);
   }, [isDark]);
 
-  // 收集所有背景图片用于预加载
   const backgroundPrefetchList = React.useMemo(
-    () => previewThemes.map((theme) => theme.bgImg).filter((img): img is string => !!img),
+    () => previewThemes.map((t) => t.bgImg).filter((img): img is string => !!img),
     [previewThemes],
   );
 
-  const handleThemeClick = (name: string) => {
-    setActiveName(name);
-  };
+  const handleThemeClick = (name: string) => setActiveName(name);
 
   const handleKeyDown = (event: React.KeyboardEvent, name: string) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -229,66 +335,88 @@ function ThemePreviewContent(props: ThemePreviewProps) {
   );
 
   const activeTheme = previewThemes.find((previewTheme) => previewTheme.name === activeName);
+  const isDarkBg = !!activeTheme?.bgImgDark;
 
   return (
     <Group
       title={locale.themeTitle}
       description={locale.themeDesc}
       background={activeTheme?.bgImg}
-      titleColor={activeTheme?.bgImgDark ? '#fff' : undefined}
+      collapse
+      titleColor={isDarkBg ? '#fff' : undefined}
       backgroundPrefetchList={backgroundPrefetchList}
     >
-      <Flex className={styles.container} gap="large">
-        <div
-          style={{
-            display: 'flex',
-          }}
-        >
-          <div className={styles.list} role="tablist" aria-label="Theme selection">
-            {previewThemes.map((previewTheme) => (
-              <div
-                className={clsx(
-                  styles.listItem,
-                  activeName === previewTheme.name && 'active',
-                  activeTheme?.bgImgDark && 'dark',
-                )}
-                key={previewTheme.name}
-                role="tab"
-                tabIndex={activeName === previewTheme.name ? 0 : -1}
-                aria-selected={activeName === previewTheme.name}
-                onClick={() => handleThemeClick(previewTheme.name)}
-                onKeyDown={(event) => handleKeyDown(event, previewTheme.name)}
-                onMouseEnter={() => setHoveredName(previewTheme.name)}
-                onMouseLeave={() => setHoveredName(null)}
-                style={{ marginBottom: 8 }}
-              >
-                <Flex justify="space-between" align="center">
-                  <span>{previewTheme.name}</span>
-                  <Tooltip title={locale.copyTheme}>
-                    <Button
-                      className={clsx(
-                        styles.copyButton,
-                        (hoveredName === previewTheme.name || copiedName === previewTheme.name) &&
-                          'visible',
-                        activeTheme?.bgImgDark && 'dark',
-                      )}
-                      type="text"
-                      size="small"
-                      icon={copiedName === previewTheme.name ? <CheckOutlined /> : <CopyOutlined />}
-                      onClick={(e) => handleCopyTheme(e, previewTheme)}
-                      aria-label={locale.copyTheme}
-                    />
-                  </Tooltip>
-                </Flex>
-              </div>
-            ))}
-            {/* AI 生成主题 - 最后一个选项 */}
+      <Flex className={styles.container} gap={token.paddingLG}>
+        {/* ===== 顶部：横排主题卡片选择器 ===== */}
+        <div className={styles.selectorRow}>
+          {/* 区域标题 */}
+          <div className={styles.selectorHeader}>
+            <span className={styles.selectorTitle}>{locale.exploreThemes}</span>
+            <span className={styles.selectorArrow} aria-hidden>
+              ↗
+            </span>
+          </div>
+
+          {/* 主题卡片列表 */}
+          <div className={styles.themeList} role="tablist" aria-label="Theme selection">
+            {previewThemes.map((previewTheme) => {
+              const isActive = activeName === previewTheme.name;
+              const isHovered = hoveredName === previewTheme.name;
+              const isCopied = copiedName === previewTheme.name;
+              const { icon, iconBg } = getThemeIcon(previewTheme);
+
+              return (
+                <div
+                  key={previewTheme.name}
+                  className={clsx(styles.themeCard, isActive && 'active', isDarkBg && 'dark-bg')}
+                  role="tab"
+                  tabIndex={isActive ? 0 : -1}
+                  aria-selected={isActive}
+                  onClick={() => handleThemeClick(previewTheme.name)}
+                  onKeyDown={(e) => handleKeyDown(e, previewTheme.name)}
+                  onMouseEnter={() => setHoveredName(previewTheme.name)}
+                  onMouseLeave={() => setHoveredName(null)}
+                >
+                  {/* 图标盒子 */}
+                  <div
+                    className={clsx(styles.themeIconBox, isActive && 'active')}
+                    style={{ backgroundColor: iconBg }}
+                  >
+                    <span role="img" aria-label={previewTheme.name}>
+                      {icon}
+                    </span>
+                    {/* 悬停时显示的复制按钮 */}
+                    {(isHovered || isCopied) && (
+                      <Tooltip title={locale.copyTheme}>
+                        <Button
+                          className={styles.copyButtonWrap}
+                          style={{ opacity: 1 }}
+                          type="text"
+                          size="small"
+                          icon={isCopied ? <CheckOutlined /> : <CopyOutlined />}
+                          onClick={(e) => handleCopyTheme(e, previewTheme)}
+                          aria-label={locale.copyTheme}
+                        />
+                      </Tooltip>
+                    )}
+                  </div>
+                  {/* 标签 */}
+                  <Text
+                    className={clsx(
+                      styles.themeLabel,
+                      isActive && 'active',
+                      isDarkBg && 'dark-bg',
+                    )}
+                  >
+                    {previewTheme.name}
+                  </Text>
+                </div>
+              );
+            })}
+
+            {/* AI 生成主题 — 占位末尾卡片 */}
             <div
-              className={clsx(
-                styles.listItem,
-                styles.aiGenerateItem,
-                activeTheme?.bgImgDark && 'dark',
-              )}
+              className={clsx(styles.aiThemeCard, isDarkBg && 'dark-bg')}
               role="tab"
               tabIndex={0}
               onClick={onOpenPromptDrawer}
@@ -299,14 +427,19 @@ function ThemePreviewContent(props: ThemePreviewProps) {
                 }
               }}
             >
-              <div className={styles.aiGenerateContent}>
-                <span className={styles.aiGenerateIcon}>🎨</span>
-                <span>{locale.aiGenerate}</span>
-              </div>
-              <div className={styles.aiGenerateDesc}>{locale.aiGenerateDesc}</div>
+              <Tooltip title={locale.aiGenerateDesc} placement="bottom">
+                <div className={styles.aiIconBox}>
+                  <PlusOutlined />
+                </div>
+              </Tooltip>
+              <Text className={clsx(styles.themeLabel, isDarkBg && 'dark-bg')}>
+                {locale.aiGenerate}
+              </Text>
             </div>
           </div>
         </div>
+
+        {/* ===== 组件预览区域 ===== */}
         <ComponentsBlock
           key={activeName}
           config={activeTheme?.props}

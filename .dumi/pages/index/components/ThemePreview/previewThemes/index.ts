@@ -125,22 +125,22 @@ export default function usePreviewThemes() {
         props: bootstrapTheme,
         copyCode: bootstrapThemeSource,
       },
-      {
-        name: locale.glass,
-        bgImg:
-          'https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*PbKXQLie7OAAAAAARTAAAAgAegCCAQ/original',
-        bgImgDark: true,
-        props: glassTheme,
-        copyCode: glassThemeSource,
-      },
-      {
-        name: locale.geek,
-        bgImg:
-          'https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*fzA2T4ms154AAAAARtAAAAgAegCCAQ/original',
-        bgImgDark: true,
-        props: geekTheme,
-        copyCode: geekThemeSource,
-      },
+      // {
+      //   name: locale.glass,
+      //   bgImg:
+      //     'https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*PbKXQLie7OAAAAAARTAAAAgAegCCAQ/original',
+      //   bgImgDark: true,
+      //   props: glassTheme,
+      //   copyCode: glassThemeSource,
+      // },
+      // {
+      //   name: locale.geek,
+      //   bgImg:
+      //     'https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*fzA2T4ms154AAAAARtAAAAgAegCCAQ/original',
+      //   bgImgDark: true,
+      //   props: geekTheme,
+      //   copyCode: geekThemeSource,
+      // },
     ];
   }, [locale]);
 }
