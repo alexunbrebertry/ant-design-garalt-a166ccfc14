@@ -9,7 +9,7 @@ module.exports = {
     '\\.md$': './node_modules/@ant-design/tools/lib/jest/demoPreprocessor',
     '\\.(jpg|png|gif|svg)$': './node_modules/@ant-design/tools/lib/jest/imagePreprocessor',
   },
-  testRegex: 'image\\.test\\.(j|t)s$',
+  testRegex: '$^',
   transformIgnorePatterns,
   globals: {
     'ts-jest': {
